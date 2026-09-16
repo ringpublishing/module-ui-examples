@@ -1,0 +1,24 @@
+{
+  "$schema": "https://anthropic.com/claude-code/marketplace.schema.json",
+  "name": "ring-publishing-integrations",
+  "owner": {
+    "name": "Ring Publishing",
+    "url": "https://github.com/ringpublishing"
+  },
+  "description": "Skills for extending Ring Publishing with modules, maintained alongside the official module example so they stay in step with working code.",
+  "plugins": [
+    {
+      "name": "ring-publishing-integrations",
+      "displayName": "Ring Publishing Integrations",
+      "source": "./",
+      "description": "Skills for extending Ring Publishing with modules - the platform's extensibility model and everything that goes into building a module for it.",
+      "category": "development",
+      "keywords": [
+        "ring-publishing",
+        "ring-module",
+        "ringsdk",
+        "accelerator"
+      ]
+    }
+  ]
+}

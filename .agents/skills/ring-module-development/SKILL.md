@@ -1,10 +1,13 @@
 ---
 name: ring-module-development
 description: >
-  Guide for implementing modules for the Ring Publishing platform.
-  Use when developing, scaffolding, or modifying module code - covers RingSDK,
-  Ring UI components, API calls through /_api/, TopBar integration, dialogs,
-  notifications, and cross-module navigation.
+  This skill should be used when the user is developing, scaffolding or
+  modifying the code of a Ring Publishing module: using RingSDK (user profile
+  and capabilities, TopBar, dialogs, toasts, openApp navigation, slots and
+  extensions, user settings, WebMCP tools), Ring UI components, or calls to Ring
+  APIs through /_api/ and their failure modes, or asking how a module reads its
+  instance configuration. It covers implementation only; Management Console
+  setup and running the module locally have their own skills.
 ---
 
 # Ring Module Development
@@ -26,9 +29,13 @@ When implementing a module:
 Use this skill for implementation decisions and verified usage patterns. Consult the canonical source for details that change independently from application code:
 
 - **Management Console setup:** use `/ring-module-configuration` and its linked Ring Console guides.
+- **Running the module locally:** use `/ring-module-local-development`.
+- **RingSDK reference and tutorials:** [Ring SDK for UI](https://developer.ringpublishing.com/reference/ring-sdk-ui.html) for every method and constant; [Build a module](https://developer.ringpublishing.com/howto/build-a-module/index.html) for the TopBar, dialog, API, slot and extension tutorials.
 - **RingSDK types:** use `@ringpublishing/ui-sdk-types` as the source of truth for RingSDK method signatures, return values, optional parameters, and other API contracts; follow the types when adding SDK calls.
 - **Ring UI components:** query `@ringpublishing/mui-components-mcp` and consult the component documentation before choosing props or variants.
-- **Ring APIs:** consult the documentation and schema for the specific target API before choosing its codename, version, endpoint, fields, filters, or error contract.
+- **Ring APIs:** codename, version, protocol and Space type come from the [Public API catalog](https://developer.ringpublishing.com/reference/public-api-catalog.html); the bridge, its errors and rate limits are in [Call Ring Publishing APIs from a module](https://developer.ringpublishing.com/howto/build-a-module/call-ring-apis.html). Fields, filters and error contracts come from the target API's own documentation and schema.
+- **Module with its own backend:** [Authenticating your module's backend](https://developer.ringpublishing.com/topics/public-api/backend-integration.html). Build on the signed `x-ring-token`, not on the deprecated `x-ring-*` headers.
+- **Configuration and permissions:** [Module configuration](https://developer.ringpublishing.com/topics/module-configuration/index.html) and [Permission model](https://developer.ringpublishing.com/topics/permissions/index.html).
 
 Do not treat the examples in this skill as a complete SDK, component, API, or Management Console reference.
 
@@ -54,7 +61,9 @@ Configuration is a prerequisite for runtime access. If the module or API permiss
 
 ## 3. RingSDK patterns
 
-The SDK is always available inside a module running in Ring. Test RingSDK interactions in the Ring environment; standalone execution without Ring context is outside this skill.
+The SDK is always available inside a module running in Ring. Test RingSDK interactions in the Ring environment (see `/ring-module-local-development`); standalone execution without Ring context is outside this skill. Do not read `RingSDK` at import time: outside the Ring Publishing iframe the global does not exist, and a top-level call throws before the application renders, including in unit tests.
+
+Prefer `RingSDK.constants` (`TopBarStates`, `OpenModes`, `ButtonTypes`) over literal strings; the string may change, the constant will not. See [Ring SDK for UI](https://developer.ringpublishing.com/reference/ring-sdk-ui.html) for the full list.
 
 ### User and authorization context
 
@@ -63,6 +72,27 @@ Use `RingSDK.api.auth.getProfile()` when the module needs the logged-in user's p
 ```js
 const profile = await RingSDK.api.auth.getProfile();
 console.log(profile.language);
+```
+
+The profile also carries `capabilities`, what this user may do in the module. Ring UI Proxy checks only that the user holds *some* capability; whether they may perform a particular operation is the module's decision, so read `capabilities` before exposing write actions. See [Permission model](https://developer.ringpublishing.com/topics/permissions/index.html).
+
+```js
+const profile = await RingSDK.api.auth.getProfile();
+const canWrite = profile.capabilities.includes('can_write');
+```
+
+### Configuration and user settings
+
+Instance configuration, entered by an administrator per Space, arrives with the profile; per-user settings are read and written with `RingSDK.api.user`, and `saveSettings` replaces the stored object rather than merging. Which mechanism fits which kind of setting is explained in [Module configuration](https://developer.ringpublishing.com/topics/module-configuration/index.html).
+
+```js
+const profile = await RingSDK.api.auth.getProfile();
+const config = profile.currentModuleInstance.metadata.configuration;
+```
+
+```js
+const settings = await RingSDK.api.user.getSettings();
+await RingSDK.api.user.saveSettings({ ...settings, defaultView: 'list' });
 ```
 
 ### TopBar state and actions
@@ -163,12 +193,14 @@ Button names are application-defined identifiers.
 
 Use `openApp` to open a view in a side panel. The opened view can belong to the current module or to another module. This is useful for opening a route from the current application - for example, a form, an add or edit view, or another focused flow - without replacing the current view. Use `closeApp` to close the side panel and optionally return a result, `getInitialData` to read data supplied by the caller, and `embedApp` when another module should render inline. Define the data contract between the caller and the opened view; do not assume that the opened view accepts arbitrary `initialData`.
 
-The promise returned by `openApp` resolves with the data supplied by the opened view when it calls `closeApp`. In this repository, the story browser opens its add-comment route in a side panel. The caller passes the story identifier in `params.initialData`, the opened route reads it with `getInitialData`, creates the comment, and closes the panel with an action result. The caller then refreshes the comments:
+The promise returned by `openApp` resolves with the data supplied by the opened view when it calls `closeApp`. In this repository, the story browser opens its add-comment route in a side panel. The caller passes the story identifier in `params.initialData`, the opened route reads it with `getInitialData`, creates the comment, and closes the panel with an action result. The caller then refreshes the comments.
+
+For a route of the same module, take the code name from `RingSDK.params.moduleCodeName`. To open another module, use that module's code name, shown in the module's details in Management Console; do not hardcode it.
 
 ```js
 // Caller: open the add-comment route from the same module
 const result = await RingSDK.api.apps.openApp({
-    moduleCodeName: '<YOUR_MODULE_CODE_NAME>',
+    moduleCodeName: RingSDK.params.moduleCodeName,
     title: 'Add comment',
     params: {
         path: `/stories-example/${storyId}/add-comment`,
@@ -194,7 +226,9 @@ const { storyId } = await RingSDK.api.apps.getInitialData();
 await RingSDK.api.apps.closeApp({ action: 'commentAdded' });
 ```
 
-Use the target module's documentation for its `path`, `initialData`, and returned-data contract. Do not hardcode an environment-specific host generated by `generateAppUrl`.
+Use the target module's documentation for its `path`, `initialData`, and returned-data contract. Do not hardcode an environment-specific host generated by `generateAppUrl`. Set the panel size with `params.options.mode` and `RingSDK.constants.OpenModes`.
+
+When a core module opens this module, for example as a Story Editor slot or extension, the module runs in *external mode*: `getInitialData()` in, `closeApp({ data })` out. Follow the data contracts in [Creating Slot](https://developer.ringpublishing.com/howto/build-a-module/create-slot.html) and [Creating Extension](https://developer.ringpublishing.com/howto/build-a-module/create-extensions.html).
 
 ### Notifications and errors
 
@@ -219,6 +253,10 @@ RingSDK.api.logs.sendUIEvent({
     metadata: { storyId: story.id }
 });
 ```
+
+### AI agent tools (WebMCP)
+
+A module can expose its actions to AI agents with `RingSDK.api.webMCP.registerTool`. Register only operations that are safe to trigger programmatically, and unregister a tool when the view that owns it unmounts. Descriptor format and examples: [Ring SDK for UI](https://developer.ringpublishing.com/reference/ring-sdk-ui.html#ringsdk-api-webmcp).
 
 ## 4. Ring UI components
 
@@ -280,6 +318,8 @@ Module iframe → /_api/<api-codename>/<version> → Ring API Gateway → target
 
 Ring APIs may expose REST or GraphQL. For a GraphQL API, the request commonly uses a JSON body containing `query` and `variables`; follow the target API's schema and error contract.
 
+Take the codename and version from the [Public API catalog](https://developer.ringpublishing.com/reference/public-api-catalog.html). The `/_api` prefix is reserved for Ring UI Proxy, so do not use it in the module's own routing. The Space is not passed; UI Proxy adds it from the module's context.
+
 ### API schema
 
 The API schema endpoint follows this pattern:
@@ -300,7 +340,7 @@ For the StoryBrowser example using Content API v2, the schema endpoint is:
 https://api.ringpublishing.com/content/v2/schema
 ```
 
-Verify endpoint and schema details in the target API's canonical documentation; they are not part of the UI SDK contract.
+Verify endpoint and schema details in the target API's canonical documentation; they are not part of the UI SDK contract. Every GraphQL API also serves an interactive [GraphQL playground](https://developer.ringpublishing.com/topics/public-api/graphql-playground.html) at its base URL, which is the quickest way to explore the schema and try a query.
 
 The StoryBrowser example sends GraphQL requests through the Ring UI API bridge. It demonstrates both read operations and write operations: queries retrieve stories, details, statuses, and notes, while mutations create, update, and soft-delete notes. The exact schema fields, mutation contracts, and permission names must always be verified against the target Content API version.
 
@@ -316,6 +356,10 @@ const response = await fetch('/_api/content/v2', {
 await response.json();
 ```
 
+### Failures and limits
+
+Read `x-api-err-kind` and `x-api-err-code` on a failed response, including a GraphQL error returned with `200`, before deciding whether to retry. A `400` or `403` with error code `9002` comes from the bridge, not from the API: the codename or version does not exist, or the API has not been granted to the module. A `403` from the API itself usually means a capability missing from the grant. Rate limits are per API key and Space, shared by every user of the module in that Space, so batch requests. Error table and limits: [Call Ring Publishing APIs from a module](https://developer.ringpublishing.com/howto/build-a-module/call-ring-apis.html); the module's own traffic and headroom: [Monitoring your API usage](https://developer.ringpublishing.com/topics/public-api/monitoring.html).
+
 ### API permissions prerequisite
 
 Requests to `/_api/*` require the module to be configured and granted access in Ring Management Console. For setup and configuration troubleshooting, consult `/ring-module-configuration` and the canonical [Ring Console documentation](https://help.ringpublishing.com/docs/ManagementConsole/index.html).
@@ -324,6 +368,7 @@ The module author does not manage or copy API keys. Ring UI Proxy uses the confi
 
 ## Further reading
 
+- [Ring Publishing developer guide](https://developer.ringpublishing.com/) - [Getting started](https://developer.ringpublishing.com/getting-started/index.html), [Build a module](https://developer.ringpublishing.com/howto/build-a-module/index.html), [Ring SDK for UI](https://developer.ringpublishing.com/reference/ring-sdk-ui.html)
 - [Ring Components MCP package](https://www.npmjs.com/package/@ringpublishing/mui-components-mcp)
 - [Ring UI component Storybook](https://design.ringpublishing.com/)
 - [Ring UI component repository](https://github.com/ringpublishing/mui-components)

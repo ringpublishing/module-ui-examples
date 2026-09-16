@@ -17,7 +17,7 @@ const StoryDetail = ({ storyId, onClose }: StoryDetailProps): ReactElement => {
         }
 
         await RingSDK.api.apps.openApp({
-            moduleCodeName: '<YOUR_MODULE_CODE_NAME>',
+            moduleCodeName: RingSDK.params.moduleCodeName,
             title: 'Comments',
             params: {
                 path: getStoryOpenAppPath(storyId)

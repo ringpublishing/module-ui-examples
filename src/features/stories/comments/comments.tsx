@@ -63,7 +63,7 @@ const Comments = (): ReactElement => {
     const handleAddComment = useCallback(async (): Promise<void> => {
         try {
             const result = await RingSDK.api.apps.openApp<CommentsAppResult>({
-                moduleCodeName: '<YOUR_MODULE_CODE_NAME>',
+                moduleCodeName: RingSDK.params.moduleCodeName,
                 title: 'Add comment',
                 params: {
                     path: getStoryAddNotePath(storyId)

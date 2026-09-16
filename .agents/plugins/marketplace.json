@@ -1,0 +1,20 @@
+{
+  "name": "ring-publishing-integrations",
+  "interface": {
+    "displayName": "Ring Publishing Integrations"
+  },
+  "plugins": [
+    {
+      "name": "ring-publishing-integrations",
+      "source": {
+        "source": "local",
+        "path": "./"
+      },
+      "policy": {
+        "installation": "AVAILABLE",
+        "authentication": "ON_INSTALL"
+      },
+      "category": "Developer Tools"
+    }
+  ]
+}

@@ -11,8 +11,7 @@
         "lint": "npm run lint:js",
         "lint:js": "eslint --ext .js,.jsx,.ts,.tsx src/ vite.config.ts",
         "lint:js:fix": "npm run lint:js -- --fix",
-        "prepare": "npm run build",
-        "start": "vite --port 3003"
+        "prepare": "npm run build"
     },
     "dependencies": {
         "@emotion/react": "~11.14.0",
@@ -34,6 +33,7 @@
     "devDependencies": {
         "@ringieraxelspringer/eslint-config": "^24.0.0",
         "@ringieraxelspringer/tsconfig": "^7.0.0",
+        "@ringpublishing/accelerator-dev-tunnel": "^1.0.0-alpha.1",
         "@types/node": "^24.0.0",
         "@types/react": "^19.0.0",
         "@types/react-dom": "^19.0.0",
