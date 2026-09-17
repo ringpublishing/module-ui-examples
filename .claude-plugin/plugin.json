@@ -1,8 +1,7 @@
 {
-  "$schema": "https://anthropic.com/claude-code/plugin.schema.json",
   "name": "ring-publishing-integrations",
   "displayName": "Ring Publishing Integrations",
-  "version": "0.2.0",
+  "version": "0.3.0",
   "description": "Skills for extending Ring Publishing with modules - the platform's extensibility model and everything that goes into building a module for it.",
   "author": {
     "name": "Ring Publishing"

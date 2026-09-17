@@ -98,7 +98,8 @@ This repository includes [agent skills](https://docs.github.com/en/copilot/how-t
 
 | Skill | Description |
 |---|---|
-| `/ring-module-development` | Implementing modules - RingSDK API, UI components, API integration, TopBar management, dialogs, cross-module communication. |
+| `/ring-module-development` | Implementing modules - RingSDK API, UI components, TopBar management, dialogs, cross-module communication. |
+| `/ring-public-apis` | Talking to Ring public APIs from any caller - the API catalog and schemas, the `/_api` bridge, authenticating a module backend or an integration of your own, and reading a failure. |
 | `/ring-module-configuration` | Configuring modules in Ring Management Console - modules, applications, instances in Spaces, API permissions, and troubleshooting. |
 | `/ring-module-local-development` | Running a module locally through a Ring Accelerator dev tunnel - variant setup, Vite plugin wiring, Bookmarklet mapping, and troubleshooting. |
 

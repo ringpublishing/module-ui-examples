@@ -4,17 +4,17 @@ description: >
   This skill should be used when the user is developing, scaffolding or
   modifying the code of a Ring Publishing module: using RingSDK (user profile
   and capabilities, TopBar, dialogs, toasts, openApp navigation, slots and
-  extensions, user settings, WebMCP tools), Ring UI components, or calls to Ring
-  APIs through /_api/ and their failure modes, or asking how a module reads its
-  instance configuration. It covers implementation only; Management Console
-  setup and running the module locally have their own skills.
+  extensions, user settings, WebMCP tools), Ring UI components, or asking how a
+  module reads its instance configuration. It covers module implementation only;
+  talking to Ring public APIs, Management Console setup and running the module
+  locally have their own skills.
 ---
 
 # Ring Module Development
 
 > **Runtime context:** A standalone module runs inside an iframe hosted by the Ring TopBar. It must use the platform SDK for shell interactions and must not access the parent page's DOM directly.
 >
-> **Scope:** This skill covers implementation. For creating or enabling a module in Ring Management Console, use `/ring-module-configuration`.
+> **Scope:** This skill covers implementation. For talking to a Ring public API - the catalog, the `/_api` bridge, schemas, tokens and failures - use `/ring-public-apis`. For creating or enabling a module in Ring Management Console, use `/ring-module-configuration`.
 
 ## How to use this skill
 
@@ -33,8 +33,7 @@ Use this skill for implementation decisions and verified usage patterns. Consult
 - **RingSDK reference and tutorials:** [Ring SDK for UI](https://developer.ringpublishing.com/reference/ring-sdk-ui.html) for every method and constant; [Build a module](https://developer.ringpublishing.com/howto/build-a-module/index.html) for the TopBar, dialog, API, slot and extension tutorials.
 - **RingSDK types:** use `@ringpublishing/ui-sdk-types` as the source of truth for RingSDK method signatures, return values, optional parameters, and other API contracts; follow the types when adding SDK calls.
 - **Ring UI components:** query `@ringpublishing/mui-components-mcp` and consult the component documentation before choosing props or variants.
-- **Ring APIs:** codename, version, protocol and Space type come from the [Public API catalog](https://developer.ringpublishing.com/reference/public-api-catalog.html); the bridge, its errors and rate limits are in [Call Ring Publishing APIs from a module](https://developer.ringpublishing.com/howto/build-a-module/call-ring-apis.html). Fields, filters and error contracts come from the target API's own documentation and schema.
-- **Module with its own backend:** [Authenticating your module's backend](https://developer.ringpublishing.com/topics/public-api/backend-integration.html). Build on the signed `x-ring-token`, not on the deprecated `x-ring-*` headers.
+- **Ring APIs, whichever side calls them:** use `/ring-public-apis`. It covers finding the API in the catalog, the `/_api` bridge and its errors, fetching a schema, authenticating a module's own backend, and reading a failure.
 - **Configuration and permissions:** [Module configuration](https://developer.ringpublishing.com/topics/module-configuration/index.html) and [Permission model](https://developer.ringpublishing.com/topics/permissions/index.html).
 
 Do not treat the examples in this skill as a complete SDK, component, API, or Management Console reference.
@@ -46,7 +45,7 @@ This skill does not prescribe a framework, state-management library, router, or 
 - A **Module Application** runs in an iframe and receives its Ring context from the platform.
 - A **Space** is the tenant context for the running module. Do not hardcode a Space, client, or user identifier.
 - `RingSDK` is the platform API exposed to the module.
-- Requests to Ring Public APIs go through the `/_api/` bridge; the module does not manage the platform API key or user access token.
+- Requests to Ring Public APIs go through the `/_api/` bridge; the module does not manage the platform API key or user access token. The bridge itself is `/ring-public-apis`.
 
 Configuration is a prerequisite for runtime access. If the module or API permission has not been configured, follow `/ring-module-configuration` before debugging application code.
 
@@ -54,7 +53,7 @@ Configuration is a prerequisite for runtime access. If the module or API permiss
 
 1. **Use `RingSDK` for platform interactions.** Use it for TopBar state, dialogs, notifications, authentication context, and cross-module navigation.
 2. **Prefer `@ringpublishing/mui-components`.** Use MUI only when the Ring library has no suitable component; use custom UI only when neither library provides the required behavior.
-3. **Call Ring APIs through `/_api/`.** Do not call Ring Public API hosts directly from module code. A module's own backend may use its own API contract.
+3. **Call Ring APIs through `/_api/`.** Do not call Ring Public API hosts directly from module code. A module's own backend authenticates differently again. Both are `/ring-public-apis`.
 4. **Reflect document state in TopBar.** Keep the TopBar state aligned with unsaved changes, saving, successful save, and failure.
 5. **Use platform feedback primitives.** Use a toast for transient feedback, a dialog for confirmation or input, and TopBar state/actions for document-level work.
 6. **Use `openApp` or `embedApp` for Ring app navigation.** Do not implement a parallel cross-module protocol.
@@ -305,66 +304,6 @@ If the module uses Ring components built on MUI X Pro, initialize the license su
 const licenseKey = RingSDK.api.config.getComponentsLicenseKey();
 LicenseInfo.setLicenseKey(licenseKey);
 ```
-
-## 5. API integration
-
-### Request pattern
-
-Use a standard HTTP client with the Ring UI API bridge:
-
-```text
-Module iframe → /_api/<api-codename>/<version> → Ring API Gateway → target API
-```
-
-Ring APIs may expose REST or GraphQL. For a GraphQL API, the request commonly uses a JSON body containing `query` and `variables`; follow the target API's schema and error contract.
-
-Take the codename and version from the [Public API catalog](https://developer.ringpublishing.com/reference/public-api-catalog.html). The `/_api` prefix is reserved for Ring UI Proxy, so do not use it in the module's own routing. The Space is not passed; UI Proxy adds it from the module's context.
-
-### API schema
-
-The API schema endpoint follows this pattern:
-
-```text
-https://api.ringpublishing.com/<api-name>/v<version>/schema
-```
-
-Here, `<api-name>` is the API codename, such as `content`. Use the schema matching the API and version requested by the module when constructing GraphQL queries, variables, and mutations.
-
-This is the one case where fetching `api.ringpublishing.com` directly is expected: it's a dev-time/tooling lookup (schema introspection, codegen, exploring the contract), not a runtime call from module code. At runtime, GraphQL requests still go through `/_api/<api-name>/<version>` per Rule 3.
-
-#### StoryBrowser example
-
-For the StoryBrowser example using Content API v2, the schema endpoint is:
-
-```text
-https://api.ringpublishing.com/content/v2/schema
-```
-
-Verify endpoint and schema details in the target API's canonical documentation; they are not part of the UI SDK contract. Every GraphQL API also serves an interactive [GraphQL playground](https://developer.ringpublishing.com/topics/public-api/graphql-playground.html) at its base URL, which is the quickest way to explore the schema and try a query.
-
-The StoryBrowser example sends GraphQL requests through the Ring UI API bridge. It demonstrates both read operations and write operations: queries retrieve stories, details, statuses, and notes, while mutations create, update, and soft-delete notes. The exact schema fields, mutation contracts, and permission names must always be verified against the target Content API version.
-
-```ts
-const response = await fetch('/_api/content/v2', {
-    method: 'POST',
-    headers: { 'content-type': 'application/json' },
-    body: JSON.stringify({
-        query: 'query { stories(first: 1) { edges { node { id } } } }'
-    })
-});
-
-await response.json();
-```
-
-### Failures and limits
-
-Read `x-api-err-kind` and `x-api-err-code` on a failed response, including a GraphQL error returned with `200`, before deciding whether to retry. A `400` or `403` with error code `9002` comes from the bridge, not from the API: the codename or version does not exist, or the API has not been granted to the module. A `403` from the API itself usually means a capability missing from the grant. Rate limits are per API key and Space, shared by every user of the module in that Space, so batch requests. Error table and limits: [Call Ring Publishing APIs from a module](https://developer.ringpublishing.com/howto/build-a-module/call-ring-apis.html); the module's own traffic and headroom: [Monitoring your API usage](https://developer.ringpublishing.com/topics/public-api/monitoring.html).
-
-### API permissions prerequisite
-
-Requests to `/_api/*` require the module to be configured and granted access in Ring Management Console. For setup and configuration troubleshooting, consult `/ring-module-configuration` and the canonical [Ring Console documentation](https://help.ringpublishing.com/docs/ManagementConsole/index.html).
-
-The module author does not manage or copy API keys. Ring UI Proxy uses the configured module permission when forwarding requests on behalf of the logged-in user. If a request returns `403`, verify configuration and user capability before changing request code.
 
 ## Further reading
 

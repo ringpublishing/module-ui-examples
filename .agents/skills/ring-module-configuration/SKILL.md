@@ -47,7 +47,7 @@ The module calls a Ring Public API through `/_api/<api-codename>/<version>`. Rin
 
 The list of APIs offered depends on the module's Space type, and a module with none of an API's capabilities selected cannot call it at all. A `400` or `403` with error code `9002` from `/_api` points back to this grant; see [Call Ring Publishing APIs from a module](https://developer.ringpublishing.com/howto/build-a-module/call-ring-apis.html).
 
-For implementation details, consult the API Integration section in `/ring-module-development`. For the Management Console procedure, consult the [Manage modules](https://help.ringpublishing.com/docs/ManagementConsole/howto/manage-custom-modules.html) guide.
+For calling the API once the grant is in place, consult `/ring-public-apis`. For the Management Console procedure, consult the [Manage modules](https://help.ringpublishing.com/docs/ManagementConsole/howto/manage-custom-modules.html) guide.
 
 ## Deployment
 
