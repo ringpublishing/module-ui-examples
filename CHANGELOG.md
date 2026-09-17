@@ -1,6 +1,12 @@
 # CHANGELOG
 The format is based on [Keep a Changelog](https://keepachangelog.com/), and this project adheres to [Semantic Versioning](https://semver.org/).
 
+## 0.3.1 - 2026-09-17
+### Changed
+- [@albert-lacki]: `@ringpublishing/accelerator-dev-tunnel` moved from `1.0.0-alpha.1` to the stable `1.0.0`. The lockfile pinned the alpha, so `npm ci` installed it; the release carries no API change.
+### Fixed
+- [@albert-lacki]: `ring-public-apis` no longer documents the empty-`audience` case or the `scopes` claim name. A request without an audience is a malformed request rather than a scenario worth describing, and the claim name inside the token is due to change.
+
 ## 0.3.0 - 2026-09-17
 ### Added
 - [@albert-lacki]: `ring-public-apis` skill - one place for talking to a Ring public API whoever is calling, with the front-end, module-backend and own-key paths kept separate, plus schema discovery and failure triage.

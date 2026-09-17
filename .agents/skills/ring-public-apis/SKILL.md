@@ -196,8 +196,7 @@ the URL, and the **Space UUID goes in both**.
   response**, not what the token was issued with. Re-mint when one expires; there is nothing
   to refresh.
 - **`scope` in the response lists the capabilities the key holds** for the audience you
-  asked for. Note the naming: the response field is `scope`, while the matching claim
-  inside the token is `scopes`.
+  asked for.
 - The token also carries the context it resolved to — client, module and Space, each as an
   id and a code name. The claim names are listed under
   [The identity token](https://developer.ringpublishing.com/topics/public-api/backend-integration.html#the-identity-token);
@@ -243,11 +242,9 @@ have before changing any code.
 | `401` `invalid_client`, **no description** | the key is fine, but it was not issued for the Space named in the audience |
 | `400` `invalid_grant` | the subject token is expired, already exchanged, or not one this exchange accepts |
 
-> Two traps here. `invalid_client` does **not** reliably mean bad credentials — the same
-> code covers a good key pointed at the wrong Space, and the presence of
-> `error_description` is the only difference. And **omitting `audience` entirely is not
-> rejected**: you get `200` and a token whose `scope` is empty. Read `scope` before
-> assuming the mint succeeded.
+> One trap worth knowing: `invalid_client` does **not** reliably mean bad credentials. The
+> same code covers a good key pointed at the wrong Space, and the presence of
+> `error_description` is the only difference.
 
 **The API refused the token.** On a direct host call, a gateway rejection looks like
 `RING_API_GTW_AUTH_ERROR` with an inner `RING_API_GTW_UNAUTHORIZED_KEY`.
