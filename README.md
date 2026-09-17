@@ -1,20 +1,36 @@
 # ring-example-module
 
-A reference implementation of a module for the [Ring Publishing](https://ringpublishing.com) platform. This repository is a **demonstration example**, not a complete or production-ready implementation of a real editorial use case. It showcases selected RingSDK capabilities, communication with Ring APIs, and use of the Ring UI component library.
-
-The example is intentionally illustrative: it demonstrates the **integration layer and platform capabilities** rather than prescribing an application structure. Its directory layout, framework, state management, routing, naming, and individual implementation choices are not required patterns. Use the code to understand how the module can communicate with Ring, not as a template that every project should copy.
-
-The example uses Content API to read data and to modify it through API mutations. The exact API operations, data model, and permissions should be adapted to the needs of the module being built.
+Two things for anyone building a module for the [Ring Publishing](https://ringpublishing.com) platform: a **reference module** that shows how a module talks to the platform, and the **agent skills** that encode how to build one.
 
 > **Important:** This repository demonstrates possible implementation techniques. A real module may use a different project structure, technology choices, UI flow, and architectural approach.
+
+## The example module
+
+A standalone UI application loaded from the Ring menu, listing stories from Content API and managing their comments. It showcases selected RingSDK capabilities, communication with Ring APIs, and use of the Ring UI component library.
+
+- [Requirements](#requirements) - the Ring-side account, module registration and API permissions it needs
+- [Running locally](#running-locally) - Node.js 24 and an Accelerator dev tunnel, then `npm run dev`
+- [What this example demonstrates](#what-this-example-demonstrates) - the flow in detail, and what it deliberately leaves out
+- [Background](#background) and [Documentation](#documentation) - the platform behind it, and where it is documented
+
+## The skills
+
+Four [agent skills](https://docs.github.com/en/copilot/how-tos/copilot-cli/customize-copilot/add-skills) under `.agents/skills/` that encode technical and design guidelines for building Ring modules. They are useful on their own, in any module project - not only in this one. They follow the standard skill format (`SKILL.md` with YAML frontmatter) and work with GitHub Copilot CLI, Claude, and other agents that support the `.agents/skills/` convention.
+
+| Skill | Description |
+|---|---|
+| `/ring-module-development` | Implementing modules - RingSDK API, UI components, TopBar management, dialogs, cross-module communication. |
+| `/ring-public-apis` | Talking to Ring public APIs from any caller - the API catalog and schemas, the `/_api` bridge, authenticating a module backend or an integration of your own, and reading a failure. |
+| `/ring-module-configuration` | Configuring modules in Ring Management Console - modules, applications, instances in Spaces, API permissions, and troubleshooting. |
+| `/ring-module-local-development` | Running a module locally through a Ring Accelerator dev tunnel - variant setup, Vite plugin wiring, Bookmarklet mapping, and troubleshooting. |
+
+Describe what you want to build - the agent maps your requirements to Ring platform patterns and loads the relevant skill on its own. → [Installing the skills](#installing-the-skills)
 
 ## Background
 
 Ring Publishing is a modular editorial platform. Its micro-frontend architecture loads independent **Module Applications** inside the TopBar shell via iframes. Each module runs in the context of a **Space** (an isolated environment within a client organisation) and has access to Ring APIs through the Ring API Gateway.
 
-The module demonstrated here is a standalone UI application loaded from the Ring menu.
-
-It runs inside the Ring TopBar shell and communicates with Ring APIs through the platform gateway.
+The module demonstrated here runs inside that shell and communicates with Ring APIs through the platform gateway.
 
 For the platform from a developer's perspective, start with these pages of the Ring Publishing developer guide:
 
@@ -72,7 +88,9 @@ The flow demonstrates:
 - creating, updating, and soft-deleting comments through Content API mutations;
 - combining Ring UI components with an application-specific user flow.
 
-The demonstrated flow is intentionally simplified and may not represent a complete real-world editorial scenario. Treat it as a collection of integration examples and implementation ideas, not as a required project blueprint.
+The exact API operations, data model, and permissions should be adapted to the needs of the module being built.
+
+The demonstrated flow is intentionally simplified and may not represent a complete real-world editorial scenario. The example is illustrative in the same way throughout: it demonstrates the **integration layer and platform capabilities** rather than prescribing an application structure. Its directory layout, framework, state management, routing, naming, and individual implementation choices are not required patterns. Use the code to understand how the module can communicate with Ring, not as a template that every project should copy.
 
 ## Documentation
 
@@ -92,16 +110,7 @@ The canonical documentation is the [Ring Publishing developer guide](https://dev
 
 The folders and files in this repository are organized for readability and demonstration purposes only. They do not define how a Ring module must be structured. Choose the directory structure, architectural boundaries, framework, state-management approach, and naming conventions that fit your own module.
 
-## AI Coding Assistant (Skills)
-
-This repository includes [agent skills](https://docs.github.com/en/copilot/how-tos/copilot-cli/customize-copilot/add-skills) under `.agents/skills/` that encode technical and design guidelines for building Ring modules. They follow the standard skill format (`SKILL.md` with YAML frontmatter) and work with GitHub Copilot CLI, Claude, and other agents that support the `.agents/skills/` convention.
-
-| Skill | Description |
-|---|---|
-| `/ring-module-development` | Implementing modules - RingSDK API, UI components, TopBar management, dialogs, cross-module communication. |
-| `/ring-public-apis` | Talking to Ring public APIs from any caller - the API catalog and schemas, the `/_api` bridge, authenticating a module backend or an integration of your own, and reading a failure. |
-| `/ring-module-configuration` | Configuring modules in Ring Management Console - modules, applications, instances in Spaces, API permissions, and troubleshooting. |
-| `/ring-module-local-development` | Running a module locally through a Ring Accelerator dev tunnel - variant setup, Vite plugin wiring, Bookmarklet mapping, and troubleshooting. |
+## Installing the skills
 
 **Install as a plugin** - the skills stay in this repository, so an update reaches every project that has the plugin installed. The repository is both the marketplace and the plugin; the skills are read from `.agents/skills/`.
 
@@ -118,5 +127,3 @@ codex plugin marketplace add ringpublishing/module-ui-examples
 Restart the agent session afterwards. Installed this way the skills are namespaced under the plugin, e.g. `/ring-publishing-integrations:ring-module-development`.
 
 **Or copy them into your project** - copy the `.agents/skills/` directory into your own repository (under `.agents/skills/`, `.github/skills/`, or `.claude/skills/`). Any agent that supports the convention auto-discovers them, and they keep their plain names (e.g. `/ring-module-development`). The copy does not follow this repository.
-
-Either way, describe what you want to build - the agent maps your requirements to Ring platform patterns and loads the relevant skill on its own.

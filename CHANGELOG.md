@@ -1,6 +1,11 @@
 # CHANGELOG
 The format is based on [Keep a Changelog](https://keepachangelog.com/), and this project adheres to [Semantic Versioning](https://semver.org/).
 
+## 0.3.2 - 2026-09-17
+### Changed
+- [@alacki]: Both plugin manifests carry the release version again. 0.3.1 bumped the CHANGELOG without them, which left `main` failing its own version check and would have shipped a stale version to plugin users.
+- [@alacki]: README leads with what the repository holds - the example module and the skills, each with links to the detail below. The skills and their descriptions were at the very bottom, past everything else.
+
 ## 0.3.1 - 2026-09-17
 ### Changed
 - [@albert-lacki]: `@ringpublishing/accelerator-dev-tunnel` moved from `1.0.0-alpha.1` to the stable `1.0.0`. The lockfile pinned the alpha, so `npm ci` installed it; the release carries no API change.
