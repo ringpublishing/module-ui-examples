@@ -14,6 +14,7 @@
         "prepare": "npm run build"
     },
     "dependencies": {
+        "@ag-ui/client": "^1.0.0",
         "@emotion/react": "~11.14.0",
         "@emotion/styled": "~11.14.0",
         "@mui/icons-material": "~7.3.0",
@@ -23,7 +24,7 @@
         "@mui/x-license": "~8.17.0",
         "@reduxjs/toolkit": "~2.11.0",
         "@ringpublishing/mui-components": "~1.16.6",
-        "@ringpublishing/ui-sdk-types": "1.0.0-alpha.1",
+        "@ringpublishing/ui-sdk-types": "~1.3.0",
         "dayjs": "~1.11.0",
         "react": "~19.2.0",
         "react-dom": "~19.2.0",

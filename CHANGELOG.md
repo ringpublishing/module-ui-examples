@@ -1,6 +1,15 @@
 # CHANGELOG
 The format is based on [Keep a Changelog](https://keepachangelog.com/), and this project adheres to [Semantic Versioning](https://semver.org/).
 
+## 0.4.0 - 2026-10-27
+### Added
+- [@rmusial2]: The add-comment view can ask an AI agent of Ring Agents whether the comment is on topic, new and clear, and talk it over in the same thread. It shows how a module runs an agent through `RingSDK.api.agents` with plain AG-UI; the agent's id goes in `src/config.ts`, and without it the view works as before.
+### Changed
+- [@rmusial2]: README keeps the essentials; setup, the walkthrough and the agent have their own pages in `docs/`.
+- [@rmusial2]: `@ringpublishing/ui-sdk-types` moved from `1.0.0-alpha.1` to `~1.3.0`, with `@ag-ui/client` for the AG-UI types.
+### Fixed
+- [@rmusial2]: Vite listens on IPv4, so the dev tunnel reaches it on macOS; it listened on `[::1]` alone and every tunnelled request got 502.
+
 ## 0.3.2 - 2026-09-17
 ### Changed
 - [@alacki]: Both plugin manifests carry the release version again. 0.3.1 bumped the CHANGELOG without them, which left `main` failing its own version check and would have shipped a stale version to plugin users.

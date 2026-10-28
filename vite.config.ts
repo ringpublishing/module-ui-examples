@@ -5,7 +5,7 @@ import { vitePlugin as accDevTunnel } from '@ringpublishing/accelerator-dev-tunn
 // Local development goes through a Ring Accelerator dev tunnel: the dev server is
 // registered as the upstream of a development variant of the module's vhost, so the
 // module runs inside Ring Publishing with RingSDK injected and `/_api` resolving.
-// See README.md (Running locally) and .agents/skills/ring-module-local-development. The
+// See docs/setup.md (Running locally) and .agents/skills/ring-module-local-development. The
 // three ACC_DEV_TUNNEL_* variables come from `.env.local` (gitignored) or the shell; without
 // them Vite starts as a plain dev server.
 export default defineConfig(({ mode }) => {
@@ -22,6 +22,9 @@ export default defineConfig(({ mode }) => {
             // The plugin also adds the vhost to `server.allowedHosts`; Vite would otherwise
             // answer every tunnelled request (addressed to the vhost) with 403 Blocked request.
             ...(tunnelConfigured ? [accDevTunnel({ token, vhost, variant })] : [])
-        ]
+        ],
+        // The tunnel dials its upstream over IPv4; Vite would otherwise listen on `[::1]` alone,
+        // which on macOS answers every tunnelled request with 502 and `ECONNREFUSED` in the log.
+        server: { host: '127.0.0.1' }
     };
 });

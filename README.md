@@ -6,12 +6,21 @@ Two things for anyone building a module for the [Ring Publishing](https://ringpu
 
 ## The example module
 
-A standalone UI application loaded from the Ring menu, listing stories from Content API and managing their comments. It showcases selected RingSDK capabilities, communication with Ring APIs, and use of the Ring UI component library.
+A standalone UI application loaded from the Ring menu. It lists stories from Content API, manages their comments, and lets an AI agent of Ring Agents help with a comment while it is written. On the way it shows how a module uses `RingSDK`, calls Ring APIs through the `/_api` bridge and builds its screens from Ring UI components.
 
-- [Requirements](#requirements) - the Ring-side account, module registration and API permissions it needs
-- [Running locally](#running-locally) - Node.js 24 and an Accelerator dev tunnel, then `npm run dev`
-- [What this example demonstrates](#what-this-example-demonstrates) - the flow in detail, and what it deliberately leaves out
-- [Background](#background) and [Documentation](#documentation) - the platform behind it, and where it is documented
+Ring Publishing is a modular editorial platform: independent **Module Applications** are loaded inside the TopBar shell, each in the context of a **Space** (an isolated environment within a client organisation), and reach Ring APIs through the Ring API Gateway. This module is one of them.
+
+To run it you need a Ring Publishing account, a registered module with Content API permissions, and a development variant of its vhost with an Accelerator dev tunnel - see [Setting up](docs/setup.md). Then:
+
+```bash
+npm install
+cp .env.example .env.local   # fill in the vhost, the variant and the token from the Accelerator panel
+npm run dev
+```
+
+- [Setting up](docs/setup.md) - the account, the module registration, the API permissions and the dev tunnel
+- [What the example demonstrates](docs/walkthrough.md) - the flow screen by screen, and what it deliberately leaves out
+- [AI help with a comment](docs/ai-agent.md) - the agent behind the add-comment view, and how to connect your own
 
 ## The skills
 
@@ -25,90 +34,6 @@ Four [agent skills](https://docs.github.com/en/copilot/how-tos/copilot-cli/custo
 | `/ring-module-local-development` | Running a module locally through a Ring Accelerator dev tunnel - variant setup, Vite plugin wiring, Bookmarklet mapping, and troubleshooting. |
 
 Describe what you want to build - the agent maps your requirements to Ring platform patterns and loads the relevant skill on its own. → [Installing the skills](#installing-the-skills)
-
-## Background
-
-Ring Publishing is a modular editorial platform. Its micro-frontend architecture loads independent **Module Applications** inside the TopBar shell via iframes. Each module runs in the context of a **Space** (an isolated environment within a client organisation) and has access to Ring APIs through the Ring API Gateway.
-
-The module demonstrated here runs inside that shell and communicates with Ring APIs through the platform gateway.
-
-For the platform from a developer's perspective, start with these pages of the Ring Publishing developer guide:
-
-- [Ways to extend Ring Publishing](https://developer.ringpublishing.com/overview/extensibility.html) - a module is one of several extension types, and the choice is expensive to change later. Read this before building.
-- [Ring Modules Framework](https://developer.ringpublishing.com/overview/ring-modules-framework.html) and [Basic structure](https://developer.ringpublishing.com/overview/basic-structure.html) - how UI Proxy, TopBar and the API Gateway fit together, and what Clients, Spaces, Modules and Module Applications are.
-- [Getting started](https://developer.ringpublishing.com/getting-started/index.html) - from registering a module to deploying it, end to end.
-- [Glossary](https://developer.ringpublishing.com/overview/glossary.html) - the terms used throughout this README.
-
-The business-side documentation lives in [Ring Publishing Help](https://help.ringpublishing.com/).
-
-## Requirements
-
-To run and test this module against a real Ring environment, you need:
-
-1. **A Ring Publishing account** with access to at least one Space.  
-   → [Get access](https://help.ringpublishing.com/getting-started/get-access.html)
-
-2. **A registered module** in Ring Management Console, with a module instance added to your Content Space.  
-   → [Manage modules](https://help.ringpublishing.com/docs/ManagementConsole/howto/manage-custom-modules.html)
-
-3. **Content API permissions** granted to the module in that Content Space: both `read` and `write`. The example reads stories and also modifies Content API data, so both permission types are required for the full flow to work. Granting is self-service in Management Console; see [Call Ring Publishing APIs from a module](https://developer.ringpublishing.com/howto/build-a-module/call-ring-apis.html). Content API is one entry in the [Public API catalog](https://developer.ringpublishing.com/reference/public-api-catalog.html), which lists each API's `/_api` path, codename and Space type.
-
-4. **A development variant** of the module's vhost in Ring Accelerator with **Upstream type: Dev tunnel**, so that the platform can serve the module from your machine. See [Running locally](#running-locally).
-
-Without the module configuration and these permissions, the example cannot access Content API through the Ring API Gateway. For setup details, see the `/ring-module-configuration` skill.
-
-The `openApp` calls open routes of this same module, so the example reads its own code name from `RingSDK.params.moduleCodeName`. To open another module, use that module's code name, shown in the module's details in Management Console.
-
-> The configuration described here is specific to running this example. Other modules may need different APIs, permissions, or Space configuration.
-
-## Running locally
-
-The module only behaves like a module when Ring Publishing serves it: outside the platform `RingSDK` is not on the page and `/_api` has nothing to resolve against. Local development therefore goes through a **Ring Accelerator dev tunnel**. A development variant of the module's vhost forwards its traffic to the Vite dev server on your machine, while UI Proxy, `RingSDK` and `/_api` stay in front of it.
-
-You need Node.js 24 and a development variant with **Upstream type: Dev tunnel** on the vhost configured as the Module Application endpoint. The `/ring-module-local-development` skill covers creating the variant, routing your browser to it and troubleshooting. The canonical guide is [Develop a module UI on your own machine](https://developer.ringpublishing.com/howto/build-a-module/develop-locally.html).
-
-```bash
-npm install
-cp .env.example .env.local   # fill in the vhost, the variant and the token from the Accelerator panel
-npm run dev
-```
-
-`npm run dev` starts Vite and, when the three `ACC_DEV_TUNNEL_*` variables are set, the tunnel with it (see `vite.config.ts`). Then open Ring Publishing, use the Accelerator Bookmarklet to map the module's vhost to the development variant (**Mappings** tab), and open the module from the menu.
-
-Without the variables Vite starts as a plain dev server. `localhost` then shows a broken application, because `RingSDK` is missing.
-
-## What this example demonstrates
-
-This example presents a list of stories loaded from Content API, with an example filter for publication status and a text search. Selecting a story displays its details and opens a comments view. The comments view loads comments assigned to the story and demonstrates adding new comments, editing existing comments, and soft-deleting comments.
-
-The flow demonstrates:
-
-- using [`RingSDK`](https://developer.ringpublishing.com/reference/ring-sdk-ui.html) for module and [TopBar](https://developer.ringpublishing.com/howto/build-a-module/manage-topbar.html) integration, navigation, [dialogs](https://developer.ringpublishing.com/howto/build-a-module/manage-simple-dialogs.html), notifications, and platform context;
-- reading stories, story details, publication statuses, and comments from Content API through the [`/_api/` bridge](https://developer.ringpublishing.com/howto/build-a-module/call-ring-apis.html);
-- creating, updating, and soft-deleting comments through Content API mutations;
-- combining Ring UI components with an application-specific user flow.
-
-The exact API operations, data model, and permissions should be adapted to the needs of the module being built.
-
-The demonstrated flow is intentionally simplified and may not represent a complete real-world editorial scenario. The example is illustrative in the same way throughout: it demonstrates the **integration layer and platform capabilities** rather than prescribing an application structure. Its directory layout, framework, state management, routing, naming, and individual implementation choices are not required patterns. Use the code to understand how the module can communicate with Ring, not as a template that every project should copy.
-
-## Documentation
-
-The canonical documentation is the [Ring Publishing developer guide](https://developer.ringpublishing.com/). The pages most relevant to this example:
-
-| Topic | Page |
-|---|---|
-| Tutorials for what the example does: TopBar, dialogs, calling APIs, slots and extensions | [Build a module](https://developer.ringpublishing.com/howto/build-a-module/index.html) |
-| Every `RingSDK` method and the `RingSDK.constants` values | [Ring SDK for UI](https://developer.ringpublishing.com/reference/ring-sdk-ui.html) |
-| Which APIs a module can call, their codenames, `/_api` paths and Space types | [Public API catalog](https://developer.ringpublishing.com/reference/public-api-catalog.html) |
-| Per-instance configuration, per-user settings and the module definition | [Module configuration](https://developer.ringpublishing.com/topics/module-configuration/index.html) |
-| Groups, capabilities and what UI Proxy checks | [Permission model](https://developer.ringpublishing.com/topics/permissions/index.html) |
-| Modules with a backend of their own | [Authenticating your module's backend](https://developer.ringpublishing.com/topics/public-api/backend-integration.html) |
-| Management Console procedures | [Manage modules](https://help.ringpublishing.com/docs/ManagementConsole/howto/manage-custom-modules.html) |
-
-## Project structure
-
-The folders and files in this repository are organized for readability and demonstration purposes only. They do not define how a Ring module must be structured. Choose the directory structure, architectural boundaries, framework, state-management approach, and naming conventions that fit your own module.
 
 ## Installing the skills
 
@@ -127,3 +52,22 @@ codex plugin marketplace add ringpublishing/module-ui-examples
 Restart the agent session afterwards. Installed this way the skills are namespaced under the plugin, e.g. `/ring-publishing-integrations:ring-module-development`.
 
 **Or copy them into your project** - copy the `.agents/skills/` directory into your own repository (under `.agents/skills/`, `.github/skills/`, or `.claude/skills/`). Any agent that supports the convention auto-discovers them, and they keep their plain names (e.g. `/ring-module-development`). The copy does not follow this repository.
+
+## Where to read more
+
+The canonical documentation is the [Ring Publishing developer guide](https://developer.ringpublishing.com/); the business side lives in [Ring Publishing Help](https://help.ringpublishing.com/). The pages most relevant to this repository:
+
+| Topic | Page |
+|---|---|
+| A module is one of several ways to extend Ring, and the choice is expensive to change later - read this before building | [Ways to extend Ring Publishing](https://developer.ringpublishing.com/overview/extensibility.html) |
+| How UI Proxy, TopBar and the API Gateway fit together, and what Clients, Spaces, Modules and Module Applications are | [Ring Modules Framework](https://developer.ringpublishing.com/overview/ring-modules-framework.html) and [Basic structure](https://developer.ringpublishing.com/overview/basic-structure.html) |
+| From registering a module to deploying it, end to end | [Getting started](https://developer.ringpublishing.com/getting-started/index.html) |
+| Tutorials for what the example does: TopBar, dialogs, calling APIs, slots and extensions | [Build a module](https://developer.ringpublishing.com/howto/build-a-module/index.html) |
+| Every `RingSDK` method and the `RingSDK.constants` values | [Ring SDK for UI](https://developer.ringpublishing.com/reference/ring-sdk-ui.html) |
+| Which APIs a module can call, their codenames, `/_api` paths and Space types | [Public API catalog](https://developer.ringpublishing.com/reference/public-api-catalog.html) |
+| Running AI agents of Ring Agents from a module: actions, streaming, stopping a run | [Use Ring Agents in a module](https://developer.ringpublishing.com/howto/build-a-module/use-ring-agents.html) |
+| Per-instance configuration, per-user settings and the module definition | [Module configuration](https://developer.ringpublishing.com/topics/module-configuration/index.html) |
+| Groups, capabilities and what UI Proxy checks | [Permission model](https://developer.ringpublishing.com/topics/permissions/index.html) |
+| Modules with a backend of their own | [Authenticating your module's backend](https://developer.ringpublishing.com/topics/public-api/backend-integration.html) |
+| Management Console procedures | [Manage modules](https://help.ringpublishing.com/docs/ManagementConsole/howto/manage-custom-modules.html) |
+| The terms used throughout this repository | [Glossary](https://developer.ringpublishing.com/overview/glossary.html) |
